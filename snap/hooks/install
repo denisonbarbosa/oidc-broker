@@ -3,12 +3,12 @@ set -eu
 
 snap_base_dir=$(dirname ${SNAP})
 
-cat <<EOF > ${SNAP_COMMON}/oidc-broker
+cat <<EOF > ${SNAP_COMMON}/entraid-broker
 [authd]
-name = OIDC Broker
+name = EntraID Broker
 brand_icon = ${snap_base_dir}/current/broker_icon.png
-dbus_name = com.ubuntu.authd.OidcBroker
-dbus_object = /com/ubuntu/authd/OidcBroker
+dbus_name = com.ubuntu.authd.EntraIDBroker
+dbus_object = /com/ubuntu/authd/EntraIDBroker
 
 [oidc]
 issuer = https://{issuer_url}

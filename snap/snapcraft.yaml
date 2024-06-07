@@ -1,7 +1,7 @@
-name: oidc-broker
-summary: OIDC Broker for authd
+name: entraid-broker
+summary: EntraID Broker for authd
 description: |
-  Broker that enables OIDC authentication for authd.
+  Broker that enables OIDC authentication with EntraID group management for authd.
 version: git
 grade: stable
 base: core24
@@ -9,8 +9,8 @@ confinement: strict
 license: GPL-3.0+
 
 apps:
-  oidc-broker:
-    command: bin/oidc-broker
+  entraid-broker:
+    command: bin/entraid-broker
     daemon: simple
     slots:
       - dbus-oidc
@@ -23,18 +23,19 @@ slots:
   dbus-oidc:
     interface: dbus
     bus: system
-    name: com.ubuntu.authd.OidcBroker
+    name: com.ubuntu.authd.EntraIDBroker
 
 plugs:
   config-files:
     interface: system-files
     read:
-      - /etc/authd/brokers.d/oidc-broker
+      - /etc/authd/brokers.d/entraid-broker
 
 parts:
   oidc-broker:
     source: .
     source-type: local
     plugin: go
+    go-buildtags: [withmsentraid]
     build-snaps:
       - go
