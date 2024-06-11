@@ -1,0 +1,60 @@
+name: Auto update branches
+on:
+    push:
+        branches:
+            - main
+concurrency: auto-update
+
+permissions:
+    pull-requests: write
+    contents: write
+
+env:
+    DEBIAN_FRONTEND: noninteractive
+
+jobs:
+    update-entraid-snap:
+        name: Update EntraID Snap branch
+        runs-on: ubuntu-latest
+        env:
+            BRANCH_NAME: msentraid-broker
+        steps:
+            - name: Install dependencies
+              run: |
+                set -eu
+                sudo apt update
+                sudo apt install -y git
+            - uses: actions/checkout@v4
+              with:
+                ref: main
+            - name: Merge main into branches
+              continue-on-error: true
+              run: |
+                set -eux
+                git config user.name "github-actions[bot]"
+                git config user.email "github-actions[bot]@users.noreply.github.com"
+                git fetch
+                git checkout -b ${{ env.BRANCH_NAME }} remotes/origin/${{ env.BRANCH_NAME }}
+
+                echo "entraid_conflict=true" >> $GITHUB_ENV
+                git pull origin main --allow-unrelated-histories --rebase
+
+                # If we get to this point, there was no conflict
+                git push origin ${{ env.BRANCH_NAME }}
+                echo "entraid_conflict=false" >> $GITHUB_ENV
+            - name: Restore branch
+              run: |
+                set -eux
+                git rebase --abort
+                git checkout -b update-${{ env.BRANCH_NAME }} remotes/origin/main
+                git pull
+            - name: Create Pull Request
+              if: ${{ env.entraid_conflict == 'true' }}
+              uses: peter-evans/create-pull-request@v6
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  commit-message: "Merge main into EntraID Snap branch"
+                  title: "Merge main into EntraID Snap branch"
+                  body: "This PR was automatically created because of a merge conflict."
+                  branch: update-${{ env.BRANCH_NAME }}
+                  base: ${{ env.BRANCH_NAME}}
