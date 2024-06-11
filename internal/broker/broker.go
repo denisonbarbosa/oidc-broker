@@ -100,6 +100,8 @@ type Option func(*option)
 func New(cfg Config, args ...Option) (b *Broker, err error) {
 	defer decorate.OnError(&err, "could not create broker with provided issuer and client ID")
 
+	// Randomly change something in existing code to see if there will be conflicts.
+
 	opts := option{
 		// This is to avoid too much complexity in the tests.
 		skipJWTSignatureCheck: false,
