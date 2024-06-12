@@ -54,7 +54,7 @@ jobs:
                 git push origin ${{ env.BRANCH_NAME }}
 
                 # Potentially existing PR with conflicts is not valid anymore: we just automerged.
-                git branch -D origin ${{ env.UPDATE_BRANCH }} || true
+                git branch --remotes -D origin/${{ env.UPDATE_BRANCH }} || true
             - name: Restore and prepare branch
               if: ${{ steps.merge.outputs.has_conflicts == 'true' }}
               run: |
