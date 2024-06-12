@@ -1,4 +1,4 @@
-name: main-broker
+name: main-oidc-broker
 summary: OIDC Broker for authd
 description: |
   Broker that enables OIDC authentication for authd.
