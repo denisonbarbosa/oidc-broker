@@ -1,0 +1,72 @@
+name: Auto update broker variant branches
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+concurrency: auto-update-broker-variants
+
+permissions:
+    pull-requests: write
+    contents: write
+
+env:
+    DEBIAN_FRONTEND: noninteractive
+
+jobs:
+    update-entraid-snap:
+        name: Update EntraID Snap branch
+        runs-on: ubuntu-latest
+        env:
+            BRANCH_NAME: msentraid-broker
+        steps:
+            - name: Install dependencies
+              run: |
+                set -eu
+                sudo apt update
+                sudo apt install -y git
+            - uses: actions/checkout@v4
+              with:
+                ref: main
+                fetch-depth: 0
+            - name: Merge main into branches
+              id: merge
+              run: |
+                set -eux
+                git config user.name "github-actions[bot]"
+                git config user.email "github-actions[bot]@users.noreply.github.com"
+                git fetch
+                git checkout ${{ env.BRANCH_NAME }}
+
+                # First, assume that we will have conflicts due to the merge command
+                # failing the action if there's any.
+                echo "has_conflicts=true" >> $GITHUB_OUTPUT
+                has_conflicts=true
+                if git merge main --commit; then
+                  has_conflicts=false
+                fi
+
+                echo "has_conflicts=${has_conflicts}" >> $GITHUB_OUTPUT
+            - name: Push branch
+              if: ${{ steps.merge.outputs.has_conflicts == 'false' }}
+              run: |
+                set -eux
+                git push origin ${{ env.BRANCH_NAME }}
+
+                # Potentially existing PR with conflicts is not valid anymore: we just automerged.
+                git branch -D origin update-${{ env.BRANCH_NAME }} || true
+            - name: Restore and prepare branch
+              if: ${{ steps.merge.outputs.has_conflicts == 'true' }}
+              run: |
+                set -eux
+                git merge --abort
+                git branch update-${{ env.BRANCH_NAME }} main
+            - name: Create Pull Request
+              if: ${{ steps.merge.outputs.has_conflicts == 'true' }}
+              uses: peter-evans/create-pull-request@v6
+              with:
+                commit-message: Auto update MSEntraID branch
+                title: Auto update MSEntraID branch
+                branch: autoupdate-${{ env.BRANCH_NAME }}
+                delete-branch: true
+                token: ${{ secrets.GITHUB_TOKEN }}
