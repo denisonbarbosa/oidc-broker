@@ -19,6 +19,7 @@ jobs:
         runs-on: ubuntu-latest
         env:
             BRANCH_NAME: msentraid-broker
+            UPDATE_BRANCH: update-msentraid-broker
         steps:
             - name: Install dependencies
               run: |
@@ -54,19 +55,20 @@ jobs:
                 git push origin ${{ env.BRANCH_NAME }}
 
                 # Potentially existing PR with conflicts is not valid anymore: we just automerged.
-                git branch -D origin update-${{ env.BRANCH_NAME }} || true
+                git branch -D origin ${{ env.UPDATE_BRANCH }} || true
             - name: Restore and prepare branch
               if: ${{ steps.merge.outputs.has_conflicts == 'true' }}
               run: |
                 set -eux
+                # Reset the state of the current destination
                 git merge --abort
-                git branch update-${{ env.BRANCH_NAME }} main
+                git reset --hard main
             - name: Create Pull Request
               if: ${{ steps.merge.outputs.has_conflicts == 'true' }}
               uses: peter-evans/create-pull-request@v6
               with:
                 commit-message: Auto update MSEntraID branch
                 title: Auto update MSEntraID branch
-                branch: autoupdate-${{ env.BRANCH_NAME }}
+                branch: ${{ env.UPDATE_BRANCH }}
                 delete-branch: true
                 token: ${{ secrets.GITHUB_TOKEN }}
