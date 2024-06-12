@@ -1,4 +1,4 @@
-name: oidc-broker
+name: ms-entraid-broker
 summary: OIDC Broker for authd
 description: |
   Broker that enables OIDC authentication for authd.
